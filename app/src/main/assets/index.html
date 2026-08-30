@@ -1,0 +1,745 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lista de compras</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --paper:#EDF0E8;
+    --card:#FFFFFF;
+    --pine:#17352C;
+    --pine-soft:#24473C;
+    --ink:#13211C;
+    --muted:#6C7A70;
+    --line:#CBD3C6;
+    --tomate:#E2503B;
+    --broto:#B7D06B;
+    --display:"Bricolage Grotesque","Trebuchet MS",sans-serif;
+    --body:"IBM Plex Sans",system-ui,-apple-system,sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,"SF Mono",monospace;
+  }
+
+  *{box-sizing:border-box}
+  [hidden]{display:none !important}
+  html,body{margin:0}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--body);
+    font-size:16px;
+    line-height:1.45;
+    -webkit-font-smoothing:antialiased;
+    padding:28px 18px 80px;
+  }
+  .app{max-width:720px;margin:0 auto}
+
+  button{font:inherit;cursor:pointer}
+  input,select{font:inherit;color:inherit}
+  :focus-visible{outline:2.5px solid var(--tomate);outline-offset:2px;border-radius:2px}
+
+  /* ---------- fita de caixa ---------- */
+  .tape{
+    position:relative;
+    background:var(--pine);
+    color:var(--paper);
+    border-radius:14px 14px 0 0;
+    padding:20px 22px 22px;
+    margin-bottom:34px;
+  }
+  .tape::after{
+    content:"";
+    position:absolute;left:0;right:0;bottom:-11px;height:12px;
+    background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='12'><path d='M0 0 L9 12 L18 0 Z' fill='%2317352C'/></svg>") repeat-x;
+    background-size:18px 12px;
+  }
+  .tape-top{
+    display:flex;justify-content:space-between;align-items:flex-start;
+    gap:16px;flex-wrap:wrap;
+  }
+  .eyebrow{
+    font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    color:#9DB3A6;
+  }
+  .budget{display:flex;align-items:center;gap:8px}
+  .budget span{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#9DB3A6}
+  .budget input{
+    width:100px;background:transparent;border:none;border-bottom:1.5px dashed #4A6659;
+    color:var(--paper);font-family:var(--mono);font-size:14px;text-align:right;padding:2px 4px;
+  }
+  .budget input::placeholder{color:#5E7A6C}
+
+  .total-line{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-top:6px}
+  .total-label{
+    font-family:var(--display);font-weight:600;font-size:19px;letter-spacing:-.01em;
+  }
+  .total-value{
+    font-family:var(--mono);font-weight:600;
+    font-size:clamp(34px,10vw,52px);
+    letter-spacing:-.035em;font-variant-numeric:tabular-nums;
+    line-height:1;
+  }
+  .meter{height:5px;background:#2B4A3E;border-radius:99px;margin:16px 0 10px;overflow:hidden}
+  .meter i{display:block;height:100%;width:0;background:var(--broto);border-radius:99px;transition:width .35s ease}
+  .meter.over i{background:var(--tomate)}
+  .tape-meta{
+    display:flex;gap:6px 18px;flex-wrap:wrap;
+    font-family:var(--mono);font-size:12px;color:#9DB3A6;
+  }
+  .tape-meta b{color:var(--paper);font-weight:500}
+
+  /* ---------- formulário ---------- */
+  .add{
+    display:grid;
+    grid-template-columns:1fr 108px 96px;
+    gap:10px;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:12px;
+    margin-bottom:30px;
+  }
+  .add .field{display:flex;flex-direction:column;gap:3px}
+  .add .field.wide{grid-column:1 / -1}
+  .add label{
+    font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+  }
+  .add input,.add select{
+    width:100%;border:none;border-bottom:1.5px solid var(--line);background:transparent;
+    padding:5px 2px;font-size:16px;
+  }
+  .add input:focus,.add select:focus{border-bottom-color:var(--pine);outline:none}
+  .add select{appearance:none;background:transparent}
+  .add .money input{font-family:var(--mono);text-align:right}
+  .add button{
+    grid-column:1 / -1;
+    background:var(--pine);color:var(--paper);border:none;border-radius:8px;
+    padding:12px;font-weight:600;letter-spacing:.01em;
+    transition:background .15s ease;
+  }
+  .add button:hover{background:var(--pine-soft)}
+
+  .combo{position:relative}
+  .combo input{padding-right:26px !important}
+  .arrow{
+    position:absolute;right:0;bottom:2px;width:24px;height:24px;padding:0;
+    background:none;border:none;color:var(--muted);font-size:11px;line-height:1;
+    transition:transform .15s ease,color .15s ease;
+  }
+  .arrow:hover{color:var(--ink)}
+  .combo.open .arrow{transform:rotate(180deg);color:var(--ink)}
+  .sugg{
+    display:none;position:absolute;z-index:30;top:calc(100% + 6px);left:0;right:0;
+    max-height:330px;overflow-y:auto;margin:0;padding:0 5px 5px;
+    background:var(--card);border:1px solid var(--line);border-radius:10px;
+    box-shadow:0 10px 26px rgba(19,33,28,.13);
+  }
+  .sugg ul{list-style:none;margin:0;padding:0}
+  .busca{
+    position:sticky;top:0;z-index:2;background:var(--card);
+    display:flex;align-items:center;gap:8px;
+    padding:9px 8px;margin:0 -5px 5px;border-bottom:1px solid var(--line);
+  }
+  .busca svg{flex:none;width:15px;height:15px;stroke:var(--muted);fill:none;stroke-width:2}
+  .busca input{width:100%;border:none;background:transparent;font-size:15px;padding:2px 0}
+  .busca input:focus{outline:none}
+  .sugg-foot{
+    position:sticky;bottom:0;background:var(--card);
+    padding-top:5px;margin:5px -5px -5px;border-top:1px solid var(--line);
+  }
+  .link-btn{
+    display:block;width:100%;text-align:left;background:none;border:none;
+    padding:10px;border-radius:7px;color:var(--pine);
+    font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  }
+  .link-btn:hover{background:#E4E9DF}
+  .novo{display:grid;gap:8px;padding:6px 10px 10px}
+  .novo input,.novo select{
+    width:100%;border:1px solid var(--line);border-radius:7px;padding:9px;font-size:15px;background:var(--card);
+  }
+  .novo button{
+    background:var(--pine);color:var(--paper);border:none;border-radius:7px;padding:10px;font-weight:600;
+  }
+  .novo button:hover{background:var(--pine-soft)}
+  .combo.open .sugg{display:block}
+  .sugg li{
+    display:flex;align-items:baseline;justify-content:space-between;gap:12px;
+    padding:8px 10px;border-radius:7px;cursor:pointer;
+  }
+  .sugg li[data-on="1"]{background:#E4E9DF}
+  .sugg li small{
+    flex:none;font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--muted);
+  }
+  .sugg .none{color:var(--muted);cursor:default;font-size:14px}
+
+  /* ---------- categorias ---------- */
+  .cat{margin-bottom:30px}
+  .cat-head{
+    display:flex;align-items:baseline;gap:10px;
+    padding-bottom:6px;border-bottom:1.5px solid var(--ink);
+  }
+  .cat-name{
+    font-family:var(--display);font-weight:800;font-size:15px;
+    text-transform:uppercase;letter-spacing:.04em;
+  }
+  .cat-count{font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .cat-sum{
+    margin-left:auto;font-family:var(--mono);font-size:15px;font-weight:600;
+    font-variant-numeric:tabular-nums;
+  }
+
+  ul{list-style:none;margin:0;padding:0}
+  .item{padding:11px 0;border-bottom:1px dotted var(--line)}
+  .row{display:flex;align-items:baseline;gap:8px}
+  .check{
+    flex:none;width:19px;height:19px;border:1.5px solid var(--muted);border-radius:5px;
+    background:transparent;padding:0;position:relative;top:3px;transition:.15s;
+  }
+  .check::after{
+    content:"";position:absolute;left:5px;top:1px;width:5px;height:10px;
+    border:solid var(--paper);border-width:0 2px 2px 0;transform:rotate(45deg) scale(0);
+    transition:transform .15s ease;
+  }
+  .item.done .check{background:var(--pine);border-color:var(--pine)}
+  .item.done .check::after{transform:rotate(45deg) scale(1)}
+  .name{font-weight:500}
+  .leader{flex:1;border-bottom:1px dotted var(--line);transform:translateY(-4px);min-width:14px}
+  .sub{font-family:var(--mono);font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .item.done .name,.item.done .sub{color:var(--muted);text-decoration:line-through;text-decoration-thickness:1px}
+
+  .controls{display:flex;align-items:center;gap:14px;margin:7px 0 0 27px;flex-wrap:wrap}
+  .qty{display:flex;align-items:center;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+  .qty button{
+    width:26px;height:26px;border:none;background:var(--card);color:var(--muted);font-size:15px;line-height:1;
+  }
+  .qty button:hover{background:#E4E9DF;color:var(--ink)}
+  .qty span{
+    min-width:26px;text-align:center;font-family:var(--mono);font-size:13px;
+    border-left:1px solid var(--line);border-right:1px solid var(--line);height:26px;line-height:26px;
+  }
+  .price{display:flex;align-items:center;gap:4px;font-family:var(--mono);font-size:13px;color:var(--muted)}
+  .price input{
+    width:74px;border:none;border-bottom:1px dashed var(--line);background:transparent;
+    font-family:var(--mono);font-size:13px;text-align:right;padding:2px;
+  }
+  .price input:focus{border-bottom-color:var(--pine);outline:none;color:var(--ink)}
+  .del{
+    margin-left:auto;background:none;border:none;padding:2px 0;color:var(--muted);
+    font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  }
+  .del:hover{color:var(--tomate)}
+
+  /* ---------- vazio + rodapé ---------- */
+  .empty{
+    border:1.5px dashed var(--line);border-radius:12px;padding:34px 22px;text-align:center;color:var(--muted);
+  }
+  .empty strong{display:block;font-family:var(--display);font-weight:600;font-size:18px;color:var(--ink);margin-bottom:5px}
+  .foot{display:flex;gap:10px;flex-wrap:wrap;margin-top:34px}
+  .foot button{
+    background:transparent;border:1px solid var(--line);border-radius:8px;padding:9px 14px;
+    font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+  }
+  .foot button:hover{border-color:var(--ink);color:var(--ink)}
+
+  @media (max-width:520px){
+    body{padding:16px 12px 60px}
+    .add{grid-template-columns:1fr 1fr}
+    .add .field.cat-field{grid-column:1 / -1}
+    .controls{margin-left:0}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none !important}
+  }
+</style>
+
+<div class="app">
+  <header class="tape">
+    <div class="tape-top">
+      <span class="eyebrow">Lista de compras</span>
+      <label class="budget"><span>Orçamento</span><input id="budget" inputmode="decimal" placeholder="0,00"></label>
+    </div>
+    <div class="total-line">
+      <span class="total-label">Total da lista</span>
+      <span class="total-value" id="total">R$&nbsp;0,00</span>
+    </div>
+    <div class="meter" id="meter"><i id="meterFill"></i></div>
+    <div class="tape-meta">
+      <span id="mItems">Nenhum item</span>
+      <span id="mCart">No carrinho <b>R$ 0,00</b></span>
+      <span id="mLeft">Falta pegar <b>R$ 0,00</b></span>
+    </div>
+  </header>
+
+  <form class="add" id="form">
+    <div class="field wide">
+      <label for="fName">Produto</label>
+      <div class="combo" id="combo">
+        <input id="fName" autocomplete="off" role="combobox" aria-expanded="false"
+               aria-controls="sugg" placeholder="Arroz 5kg" required>
+        <button type="button" class="arrow" id="fNameToggle" aria-label="Ver produtos sugeridos">▼</button>
+        <div class="sugg" id="sugg">
+          <div class="busca">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4.2-4.2"/></svg>
+            <input id="fSearch" type="search" autocomplete="off" placeholder="Pesquisar produto" aria-label="Pesquisar produto">
+          </div>
+          <ul id="suggList" role="listbox" aria-label="Produtos sugeridos"></ul>
+          <div class="sugg-foot">
+            <button type="button" class="link-btn" id="novoProdBtn">+ Cadastrar novo produto</button>
+            <div class="novo" id="novoProd" hidden>
+              <input id="npName" autocomplete="off" placeholder="Nome do produto">
+              <select id="npCat" aria-label="Categoria do novo produto"></select>
+              <input id="npNewCat" autocomplete="off" placeholder="Nome da nova categoria" hidden>
+              <button type="button" id="npSave">Salvar produto</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="field money">
+      <label for="fPrice">Valor unitário</label>
+      <input id="fPrice" inputmode="decimal" placeholder="0,00">
+    </div>
+    <div class="field">
+      <label for="fQty">Qtd</label>
+      <input id="fQty" inputmode="numeric" value="1">
+    </div>
+    <div class="field cat-field">
+      <label for="fCat">Categoria</label>
+      <select id="fCat"></select>
+    </div>
+    <button type="submit">Adicionar à lista</button>
+  </form>
+
+  <main id="list"></main>
+
+  <div class="foot">
+    <button id="clearDone" type="button">Limpar comprados</button>
+    <button id="clearAll" type="button">Esvaziar lista</button>
+  </div>
+</div>
+
+<script>
+/* No app Android não existe a API window.storage do Claude,
+   então aqui ela é atendida pelo localStorage do WebView. */
+window.storage = window.storage || {
+  async get(k){
+    const v = localStorage.getItem(k);
+    if(v === null) throw new Error("chave inexistente: " + k);
+    return { key:k, value:v, shared:false };
+  },
+  async set(k, v){ localStorage.setItem(k, v); return { key:k, value:v, shared:false }; },
+  async delete(k){ localStorage.removeItem(k); return { key:k, deleted:true, shared:false }; },
+  async list(prefix){
+    const keys = Object.keys(localStorage).filter(k => !prefix || k.startsWith(prefix));
+    return { keys, prefix, shared:false };
+  }
+};
+</script>
+
+<script>
+const CATS_BASE = ["Hortifrúti","Açougue e peixaria","Padaria","Laticínios e frios","Mercearia","Bebidas","Congelados","Limpeza","Higiene","Pet","Outros"];
+const KEY = "lista-compras:v2";
+const brl = n => new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(n||0);
+
+function parseMoney(v){
+  if(typeof v === "number") return v;
+  let s = String(v).replace(/[^\d,.-]/g,"").trim();
+  if(!s) return 0;
+  if(s.includes(",")) s = s.replace(/\./g,"").replace(",",".");
+  const n = parseFloat(s);
+  return isNaN(n) ? 0 : Math.max(0,n);
+}
+
+const CATALOGO = [
+  ["Banana","Hortifrúti"],["Maçã","Hortifrúti"],["Laranja","Hortifrúti"],["Limão","Hortifrúti"],
+  ["Mamão","Hortifrúti"],["Melancia","Hortifrúti"],["Abacaxi","Hortifrúti"],["Uva","Hortifrúti"],
+  ["Tomate","Hortifrúti"],["Cebola","Hortifrúti"],["Alho","Hortifrúti"],["Batata","Hortifrúti"],
+  ["Cenoura","Hortifrúti"],["Alface","Hortifrúti"],["Couve","Hortifrúti"],["Repolho","Hortifrúti"],
+  ["Pimentão","Hortifrúti"],["Abobrinha","Hortifrúti"],["Chuchu","Hortifrúti"],["Mandioca","Hortifrúti"],
+  ["Peito de frango","Açougue e peixaria"],["Coxa de frango","Açougue e peixaria"],
+  ["Carne moída","Açougue e peixaria"],["Alcatra","Açougue e peixaria"],["Picanha","Açougue e peixaria"],
+  ["Costela","Açougue e peixaria"],["Linguiça","Açougue e peixaria"],["Bacon","Açougue e peixaria"],
+  ["Filé de tilápia","Açougue e peixaria"],["Camarão","Açougue e peixaria"],
+  ["Pão francês","Padaria"],["Pão de forma","Padaria"],["Pão de queijo","Padaria"],
+  ["Bolo","Padaria"],["Biscoito","Padaria"],
+  ["Leite","Laticínios e frios"],["Leite condensado","Laticínios e frios"],["Creme de leite","Laticínios e frios"],
+  ["Iogurte","Laticínios e frios"],["Queijo mussarela","Laticínios e frios"],["Queijo prato","Laticínios e frios"],
+  ["Requeijão","Laticínios e frios"],["Manteiga","Laticínios e frios"],["Margarina","Laticínios e frios"],
+  ["Presunto","Laticínios e frios"],["Ovos","Laticínios e frios"],
+  ["Arroz 5kg","Mercearia"],["Feijão 1kg","Mercearia"],["Macarrão","Mercearia"],["Açúcar","Mercearia"],
+  ["Café","Mercearia"],["Sal","Mercearia"],["Óleo de soja","Mercearia"],["Azeite","Mercearia"],
+  ["Vinagre","Mercearia"],["Farinha de trigo","Mercearia"],["Farinha de mandioca","Mercearia"],
+  ["Molho de tomate","Mercearia"],["Milho em conserva","Mercearia"],["Ervilha","Mercearia"],
+  ["Atum","Mercearia"],["Sardinha","Mercearia"],["Achocolatado","Mercearia"],["Maionese","Mercearia"],
+  ["Ketchup","Mercearia"],["Tempero pronto","Mercearia"],
+  ["Água mineral","Bebidas"],["Refrigerante","Bebidas"],["Suco","Bebidas"],["Cerveja","Bebidas"],
+  ["Vinho","Bebidas"],["Energético","Bebidas"],
+  ["Pizza congelada","Congelados"],["Nuggets","Congelados"],["Hambúrguer congelado","Congelados"],
+  ["Batata frita congelada","Congelados"],["Sorvete","Congelados"],
+  ["Detergente","Limpeza"],["Sabão em pó","Limpeza"],["Sabão em barra","Limpeza"],["Amaciante","Limpeza"],
+  ["Água sanitária","Limpeza"],["Desinfetante","Limpeza"],["Esponja","Limpeza"],["Saco de lixo","Limpeza"],
+  ["Limpador multiuso","Limpeza"],["Papel toalha","Limpeza"],
+  ["Papel higiênico","Higiene"],["Sabonete","Higiene"],["Creme dental","Higiene"],["Escova de dente","Higiene"],
+  ["Shampoo","Higiene"],["Condicionador","Higiene"],["Desodorante","Higiene"],["Absorvente","Higiene"],
+  ["Fio dental","Higiene"],["Aparelho de barbear","Higiene"],
+  ["Ração para cães","Pet"],["Ração para gatos","Pet"],["Areia sanitária","Pet"],["Petisco para pet","Pet"]
+];
+
+function novoId(){ return Date.now() + "-" + Math.random().toString(36).slice(2,7); }
+
+let state = { budget:0, lastCat:"Mercearia", items:[], cats:[], catalogo:[] };
+
+/* categorias = as fixas + as que o usuário criou, com "Outros" sempre por último */
+function cats(){
+  const fixas = CATS_BASE.filter(c => c !== "Outros");
+  return fixas.concat(state.cats.filter(c => !CATS_BASE.includes(c)), ["Outros"]);
+}
+/* catálogo = os produtos genéricos + os que o usuário cadastrou */
+function catalogo(){
+  const vistos = new Set();
+  return state.catalogo.concat(CATALOGO).filter(([n]) => {
+    const k = n.toLowerCase();
+    if(vistos.has(k)) return false;
+    vistos.add(k); return true;
+  });
+}
+
+/* ---------- persistência ---------- */
+async function save(){
+  try{ await window.storage.set(KEY, JSON.stringify(state)); }
+  catch(e){ console.warn("Não deu para salvar:", e); }
+}
+async function load(){
+  let raw = null;
+  try{
+    const r = await window.storage.get(KEY);
+    raw = r && r.value;
+  }catch(e){ /* chave ainda não existe */ }
+
+  if(raw){
+    try{
+      const d = JSON.parse(raw);
+      state = {
+        budget: d.budget || 0,
+        lastCat: d.lastCat || "Mercearia",
+        items: Array.isArray(d.items) ? d.items : [],
+        cats: Array.isArray(d.cats) ? d.cats : [],
+        catalogo: Array.isArray(d.catalogo) ? d.catalogo : []
+      };
+      return;
+    }catch(e){ /* dado corrompido: recomeça vazio */ }
+  }
+}
+
+/* ---------- montagem ---------- */
+const $ = id => document.getElementById(id);
+function popularCategorias(){
+  const atual = $("fCat").value;
+  const lista = cats();
+  $("fCat").innerHTML = "";
+  $("npCat").innerHTML = "";
+  lista.forEach(c => {
+    const o = document.createElement("option"); o.value = o.textContent = c;
+    $("fCat").appendChild(o);
+    $("npCat").appendChild(o.cloneNode(true));
+  });
+  const nova = document.createElement("option");
+  nova.value = "__nova"; nova.textContent = "+ Criar nova categoria";
+  $("npCat").appendChild(nova);
+  if(lista.includes(atual)) $("fCat").value = atual;
+}
+
+function totals(){
+  let all=0, done=0, count=0;
+  for(const it of state.items){
+    const v = it.price * it.qty;
+    all += v; count += it.qty;
+    if(it.done) done += v;
+  }
+  return {all, done, left: all-done, count};
+}
+
+function render(){
+  const t = totals();
+  $("total").textContent = brl(t.all);
+  $("mItems").textContent = state.items.length === 0 ? "Nenhum item"
+    : `${state.items.length} produto${state.items.length>1?"s":""} · ${t.count} unidade${t.count>1?"s":""}`;
+  $("mCart").innerHTML = `No carrinho <b>${brl(t.done)}</b>`;
+  $("mLeft").innerHTML = state.budget > 0
+    ? `Sobra do orçamento <b>${brl(state.budget - t.all)}</b>`
+    : `Falta pegar <b>${brl(t.left)}</b>`;
+
+  const base = state.budget > 0 ? state.budget : t.all;
+  const pct = base > 0 ? Math.min(100, (state.budget>0 ? t.all : t.done)/base*100) : 0;
+  $("meterFill").style.width = pct + "%";
+  $("meter").classList.toggle("over", state.budget>0 && t.all>state.budget);
+
+  const list = $("list");
+  list.innerHTML = "";
+
+  if(!state.items.length){
+    list.innerHTML = `<div class="empty"><strong>Sua lista está vazia</strong>
+      Clique na seta do campo Produto para escolher entre os itens sugeridos, ou digite o nome do que você precisa.</div>`;
+    return;
+  }
+
+  for(const cat of cats()){
+    const items = state.items.filter(i => i.cat === cat);
+    if(!items.length) continue;
+    const sum = items.reduce((s,i) => s + i.price*i.qty, 0);
+
+    const sec = document.createElement("section");
+    sec.className = "cat";
+    sec.innerHTML = `<div class="cat-head">
+        <span class="cat-name">${cat}</span>
+        <span class="cat-count">${items.length} ${items.length>1?"itens":"item"}</span>
+        <span class="cat-sum">${brl(sum)}</span>
+      </div><ul></ul>`;
+    const ul = sec.querySelector("ul");
+
+    for(const it of items){
+      const li = document.createElement("li");
+      li.className = "item" + (it.done ? " done" : "");
+      li.innerHTML = `
+        <div class="row">
+          <button class="check" data-act="done" aria-label="Marcar ${it.name} como comprado" aria-pressed="${it.done}"></button>
+          <span class="name">${escapeHtml(it.name)}</span>
+          <span class="leader"></span>
+          <span class="sub">${brl(it.price*it.qty)}</span>
+        </div>
+        <div class="controls">
+          <div class="qty">
+            <button data-act="minus" aria-label="Diminuir quantidade">−</button>
+            <span>${it.qty}</span>
+            <button data-act="plus" aria-label="Aumentar quantidade">+</button>
+          </div>
+          <label class="price">R$ <input data-act="price" inputmode="decimal"
+            value="${it.price.toFixed(2).replace(".",",")}" aria-label="Valor unitário de ${escapeHtml(it.name)}"></label>
+          <button class="del" data-act="del">Remover</button>
+        </div>`;
+      li.addEventListener("click", e => {
+        const act = e.target.dataset && e.target.dataset.act;
+        if(!act || act === "price") return;
+        if(act === "done") it.done = !it.done;
+        if(act === "plus") it.qty++;
+        if(act === "minus") it.qty = Math.max(1, it.qty-1);
+        if(act === "del") state.items = state.items.filter(x => x.id !== it.id);
+        commit();
+      });
+      li.querySelector('[data-act="price"]').addEventListener("change", e => {
+        it.price = parseMoney(e.target.value);
+        commit();
+      });
+      ul.appendChild(li);
+    }
+    list.appendChild(sec);
+  }
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+function commit(){ render(); save(); }
+
+/* ---------- sugestões de produto ---------- */
+const combo = $("combo"), sugg = $("sugg"), suggList = $("suggList");
+const fName = $("fName"), fSearch = $("fSearch");
+let marcado = -1, visiveis = [];
+
+const semAcento = s => String(s).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+
+function filtrar(termo){
+  const t = semAcento(termo || "").trim();
+  const base = catalogo();
+  visiveis = t ? base.filter(([n,c]) => semAcento(n).includes(t) || semAcento(c).includes(t)) : base;
+  suggList.innerHTML = "";
+  marcado = -1;
+
+  if(!visiveis.length){
+    const li = document.createElement("li");
+    li.className = "none";
+    li.textContent = "Nada encontrado. Cadastre esse produto ali embaixo.";
+    suggList.appendChild(li);
+    return;
+  }
+  visiveis.forEach(([n,c], i) => {
+    const li = document.createElement("li");
+    li.setAttribute("role","option");
+    li.dataset.i = i;
+    li.innerHTML = `<span>${escapeHtml(n)}</span><small>${escapeHtml(c)}</small>`;
+    li.addEventListener("mousedown", e => { e.preventDefault(); escolher(i); });
+    suggList.appendChild(li);
+  });
+}
+
+function abrirSugestoes(termo, focarBusca){
+  fSearch.value = termo || "";
+  filtrar(fSearch.value);
+  combo.classList.add("open");
+  fName.setAttribute("aria-expanded","true");
+  sugg.scrollTop = 0;
+  if(focarBusca) fSearch.focus();
+}
+
+function fecharSugestoes(){
+  combo.classList.remove("open");
+  fName.setAttribute("aria-expanded","false");
+  esconderNovo();
+  marcado = -1;
+}
+
+function marcar(i){
+  const lis = suggList.querySelectorAll("li[data-i]");
+  if(!lis.length) return;
+  marcado = (i + lis.length) % lis.length;
+  lis.forEach(li => li.removeAttribute("data-on"));
+  const alvo = lis[marcado];
+  alvo.setAttribute("data-on","1");
+  alvo.scrollIntoView({block:"nearest"});
+}
+
+function escolher(i){
+  const item = visiveis[i];
+  if(!item) return;
+  fName.value = item[0];
+  $("fCat").value = cats().includes(item[1]) ? item[1] : "Outros";
+  fecharSugestoes();
+  $("fPrice").focus();
+}
+
+function navegar(e){
+  const aberto = combo.classList.contains("open");
+  if(e.key === "ArrowDown"){
+    e.preventDefault();
+    if(!aberto) abrirSugestoes(fName.value, false);
+    marcar(marcado + 1);
+  }else if(e.key === "ArrowUp"){
+    e.preventDefault();
+    if(aberto) marcar(marcado - 1);
+  }else if(e.key === "Enter" && aberto && marcado >= 0){
+    e.preventDefault();
+    escolher(marcado);
+  }else if(e.key === "Escape" && aberto){
+    e.preventDefault();
+    fecharSugestoes();
+    fName.focus();
+  }
+}
+
+$("fNameToggle").addEventListener("click", () => {
+  if(combo.classList.contains("open")) fecharSugestoes();
+  else abrirSugestoes("", true);
+});
+
+fName.addEventListener("input", () => abrirSugestoes(fName.value, false));
+fName.addEventListener("keydown", navegar);
+fSearch.addEventListener("input", () => filtrar(fSearch.value));
+fSearch.addEventListener("keydown", e => {
+  if(e.key === "Enter"){ e.preventDefault(); if(marcado < 0) marcar(0); else escolher(marcado); }
+  else navegar(e);
+});
+
+document.addEventListener("click", e => {
+  if(!combo.contains(e.target)) fecharSugestoes();
+});
+
+/* ---------- cadastrar produto novo ---------- */
+function mostrarNovo(){
+  $("novoProd").hidden = false;
+  $("novoProdBtn").hidden = true;
+  $("npName").value = fSearch.value.trim() || fName.value.trim();
+  $("npCat").value = $("fCat").value;
+  $("npNewCat").hidden = true;
+  $("npNewCat").value = "";
+  $("npName").focus();
+}
+function esconderNovo(){
+  $("novoProd").hidden = true;
+  $("novoProdBtn").hidden = false;
+}
+
+$("novoProdBtn").addEventListener("click", mostrarNovo);
+
+$("npCat").addEventListener("change", () => {
+  const nova = $("npCat").value === "__nova";
+  $("npNewCat").hidden = !nova;
+  if(nova) $("npNewCat").focus();
+});
+
+function salvarNovoProduto(){
+  const nome = $("npName").value.trim();
+  if(!nome){ $("npName").focus(); return; }
+
+  let cat = $("npCat").value;
+  if(cat === "__nova"){
+    cat = $("npNewCat").value.trim();
+    if(!cat){ $("npNewCat").focus(); return; }
+    if(!cats().some(c => c.toLowerCase() === cat.toLowerCase())){
+      state.cats.push(cat);
+      popularCategorias();
+    }else{
+      cat = cats().find(c => c.toLowerCase() === cat.toLowerCase());
+    }
+  }
+
+  const jaExiste = catalogo().some(([n]) => n.toLowerCase() === nome.toLowerCase());
+  if(!jaExiste) state.catalogo.unshift([nome, cat]);
+
+  save();
+  fName.value = nome;
+  $("fCat").value = cat;
+  fecharSugestoes();
+  $("fPrice").focus();
+}
+
+$("npSave").addEventListener("click", salvarNovoProduto);
+$("npName").addEventListener("keydown", e => { if(e.key === "Enter"){ e.preventDefault(); salvarNovoProduto(); } });
+$("npNewCat").addEventListener("keydown", e => { if(e.key === "Enter"){ e.preventDefault(); salvarNovoProduto(); } });
+
+/* ---------- eventos ---------- */
+$("form").addEventListener("submit", e => {
+  e.preventDefault();
+  fecharSugestoes();
+  const name = $("fName").value.trim();
+  if(!name) return;
+  state.items.push({
+    id: novoId(),
+    name,
+    price: parseMoney($("fPrice").value),
+    qty: Math.max(1, parseInt($("fQty").value,10) || 1),
+    cat: $("fCat").value,
+    done: false
+  });
+  state.lastCat = $("fCat").value;
+  $("fName").value = ""; $("fPrice").value = ""; $("fQty").value = "1";
+  $("fName").focus();
+  commit();
+});
+
+$("budget").addEventListener("change", e => {
+  state.budget = parseMoney(e.target.value);
+  e.target.value = state.budget ? state.budget.toFixed(2).replace(".",",") : "";
+  commit();
+});
+
+$("clearDone").addEventListener("click", () => {
+  state.items = state.items.filter(i => !i.done);
+  commit();
+});
+$("clearAll").addEventListener("click", () => {
+  if(!state.items.length || confirm("Apagar todos os itens da lista?")){
+    state.items = [];
+    commit();
+  }
+});
+
+(async function init(){
+  await load();
+  popularCategorias();
+  $("fCat").value = cats().includes(state.lastCat) ? state.lastCat : "Mercearia";
+  if(state.budget) $("budget").value = state.budget.toFixed(2).replace(".",",");
+  render();
+})();
+</script>
