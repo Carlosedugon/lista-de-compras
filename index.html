@@ -82,6 +82,52 @@
   :focus-visible{outline:2.5px solid var(--tomate);outline-offset:2px}
 
   /* ---------- barra do dia ---------- */
+  .statusbar{
+    display:flex;align-items:center;gap:8px;
+    background:var(--card);border:var(--borda) solid var(--line);border-radius:var(--raio);
+    box-shadow:var(--sombra);padding:8px 12px;margin-bottom:12px;
+  }
+  .statusbar .pisca{
+    flex:none;width:8px;height:8px;border-radius:50%;background:var(--muted);transition:background .2s;
+  }
+  .statusbar.ok .pisca{background:#3E9B54}
+  .statusbar.erro .pisca{background:var(--tomate)}
+  .statusbar.off .pisca{background:#E0A030}
+  .statusbar .txt{
+    flex:1;text-align:left;background:none;border:none;padding:0;color:var(--muted);
+    font-family:var(--mono);font-size:11px;letter-spacing:.06em;
+  }
+  .statusbar.erro .txt{color:var(--tomate)}
+  .statusbar .salvar{
+    background:none;border:none;color:var(--marca);padding:2px 0;
+    font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  }
+  .statusbar .salvar:hover{text-decoration:underline}
+  .log{
+    background:var(--card);border:var(--borda) solid var(--line);border-radius:var(--raio);
+    box-shadow:var(--sombra);padding:12px;margin-bottom:12px;
+  }
+  .log h4{
+    margin:0 0 8px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted);font-weight:400;
+    display:flex;align-items:center;gap:10px;
+  }
+  .log h4 button{
+    margin-left:auto;background:none;border:none;color:var(--marca);
+    font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  }
+  .log ul{list-style:none;margin:0;padding:0;max-height:220px;overflow-y:auto;display:grid;gap:1px}
+  .log li{display:flex;gap:9px;align-items:baseline;padding:5px 2px;font-size:13px;border-bottom:1px dotted var(--line)}
+  .log li:last-child{border-bottom:none}
+  .log li i{flex:none;width:7px;height:7px;border-radius:50%;background:var(--muted);position:relative;top:-1px}
+  .log li.ok i{background:#3E9B54}
+  .log li.erro i{background:var(--tomate)}
+  .log li.aviso i{background:#E0A030}
+  .log li time{flex:none;font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .erro-salvar{
+    background:#FDECEA;border:1px solid var(--tomate);color:#8A2A1E;
+    border-radius:var(--raio);padding:10px 12px;margin-bottom:12px;font-size:14px;
+  }
   .topbar{display:flex;gap:10px;margin-bottom:12px}
   .dia{
     flex:1;display:flex;align-items:center;gap:9px;
@@ -103,6 +149,17 @@
     background:var(--card);border:var(--borda) solid var(--line);border-radius:var(--raio);
     box-shadow:var(--sombra);padding:14px;margin-bottom:16px;
   }
+  .cal-aviso{
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    background:var(--paper);border:var(--borda) solid var(--marca);border-radius:var(--raio);
+    padding:10px 12px;margin-bottom:12px;font-size:14px;
+  }
+  .cal-aviso b{font-weight:600}
+  .cal-aviso button{
+    margin-left:auto;background:none;border:none;color:var(--muted);
+    font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  }
+  .cal-aviso button:hover{color:var(--tomate)}
   .cal-head{display:flex;align-items:center;gap:8px;margin-bottom:12px}
   .cal-head strong{
     flex:1;text-align:center;font-family:var(--titulo);font-size:15px;text-transform:capitalize;
@@ -330,7 +387,22 @@
     <button class="tema" id="btnTema" type="button">Pixel</button>
   </div>
 
+  <div class="statusbar" id="statusbar">
+    <span class="pisca"></span>
+    <button class="txt" type="button" id="statusTxt" aria-expanded="false">Carregando…</button>
+    <button class="salvar" type="button" id="btnSalvar">Salvar agora</button>
+  </div>
+
+  <div class="log" id="log" hidden>
+    <h4>Registro <button type="button" id="copiarLog">Copiar</button></h4>
+    <ul id="logLista"></ul>
+  </div>
+
   <div class="cal" id="cal" hidden>
+    <div class="cal-aviso" id="calAviso" hidden>
+      <span><b>Copiar lista:</b> toque no dia de destino.</span>
+      <button type="button" id="cancelaCopia">Cancelar</button>
+    </div>
     <div class="cal-head">
       <button type="button" id="mesAnt" aria-label="Mês anterior">‹</button>
       <strong id="mesTxt"></strong>
@@ -408,6 +480,26 @@
     <button id="clearAll" type="button">Esvaziar este dia</button>
   </div>
 </div>
+
+<script>
+/* Fora do ambiente do Claude não existe window.storage: aqui ela é atendida
+   pelo localStorage do navegador (vale para o site e para o app Android). */
+if(!window.storage){
+  window.storage = {
+    async get(k){
+      const v = localStorage.getItem(k);
+      if(v === null) throw new Error("chave inexistente: " + k);
+      return { key:k, value:v, shared:false };
+    },
+    async set(k, v){ localStorage.setItem(k, v); return { key:k, value:v, shared:false }; },
+    async delete(k){ localStorage.removeItem(k); return { key:k, deleted:true, shared:false }; },
+    async list(prefix){
+      const keys = Object.keys(localStorage).filter(k => !prefix || k.startsWith(prefix));
+      return { keys, prefix, shared:false };
+    }
+  };
+}
+</script>
 
 <script>
 const CATS_BASE = ["Hortifrúti","Açougue e peixaria","Padaria","Laticínios e frios","Mercearia","Bebidas","Congelados","Limpeza","Higiene","Pet","Outros"];
@@ -526,6 +618,44 @@ function totalDe(d){
   return l ? l.items.reduce((s,i) => s + i.price*i.qty, 0) : 0;
 }
 
+/* ---------- registro e status ---------- */
+const LOG = [];
+const hora = d => String(d.getHours()).padStart(2,"0") + ":" + String(d.getMinutes()).padStart(2,"0") + ":" + String(d.getSeconds()).padStart(2,"0");
+
+function logar(tipo, msg){
+  const agora = new Date();
+  const ultimo = LOG[0];
+  // gravações seguidas viram uma linha só, com contador, para o registro não virar poluição
+  if(ultimo && ultimo.tipo === tipo && ultimo.msg === msg && agora - ultimo.quando < 60000){
+    ultimo.vezes++;
+    ultimo.quando = agora;
+  }else{
+    LOG.unshift({ tipo, msg, quando: agora, vezes: 1 });
+    if(LOG.length > 40) LOG.pop();
+  }
+  renderStatus();
+}
+
+function renderStatus(){
+  const bar = $("statusbar");
+  const ultimo = LOG[0];
+  bar.classList.remove("ok","erro","off");
+  if(ultimo){
+    bar.classList.add(ultimo.tipo === "erro" ? "erro" : ultimo.tipo === "aviso" ? "off" : "ok");
+    $("statusTxt").textContent = hora(ultimo.quando) + "  " + ultimo.msg + (ultimo.vezes > 1 ? " (" + ultimo.vezes + "x)" : "");
+  }
+  if($("log").hidden) return;
+
+  const ul = $("logLista");
+  ul.innerHTML = "";
+  LOG.forEach(l => {
+    const li = document.createElement("li");
+    li.className = l.tipo;
+    li.innerHTML = `<i></i><time>${hora(l.quando)}</time><span>${escapeHtml(l.msg)}${l.vezes>1 ? " ("+l.vezes+"x)" : ""}</span>`;
+    ul.appendChild(li);
+  });
+}
+
 /* ---------- persistência ---------- */
 async function save(){
   // não guarda dias abertos sem nada dentro
@@ -533,8 +663,14 @@ async function save(){
     const l = state.listas[d];
     if(d !== state.data && !l.items.length && !l.budget) delete state.listas[d];
   }
-  try{ await window.storage.set(KEY, JSON.stringify(state)); }
-  catch(e){ console.warn("Não deu para salvar:", e); }
+  try{
+    await window.storage.set(KEY, JSON.stringify(state));
+    const n = lista().items.length;
+    logar("ok", "Lista gravada no aparelho (" + n + (n === 1 ? " item)" : " itens)"));
+  }catch(e){
+    console.warn("Não deu para salvar:", e);
+    logar("erro", "Falha ao gravar: " + (e && e.message ? e.message : "armazenamento bloqueado"));
+  }
 }
 async function load(){
   let raw = null;
@@ -550,9 +686,13 @@ async function load(){
         cats: Array.isArray(d.cats) ? d.cats : [],
         catalogo: Array.isArray(d.catalogo) ? d.catalogo : []
       };
+      logar("ok", "Dados carregados do aparelho (" + Object.keys(state.listas).length + " dia(s) salvo(s))");
       return;
-    }catch(e){}
+    }catch(e){
+      logar("erro", "Dados guardados estavam corrompidos; recomeçando");
+    }
   }
+  logar("aviso", "Primeira abertura: carregando a lista inicial");
   // primeira vez: já entra com a lista do dia 4
   state.data = SEED_DATA;
   state.listas[SEED_DATA] = {
@@ -584,7 +724,10 @@ function popularCategorias(){
 }
 
 /* ---------- calendário ---------- */
+let modoCopia = false;
+
 function renderCalendario(){
+  $("calAviso").hidden = !modoCopia;
   const ano = mesVisivel.getFullYear(), mes = mesVisivel.getMonth();
   $("mesTxt").textContent = fmtMes.format(mesVisivel);
 
@@ -607,7 +750,12 @@ function renderCalendario(){
       b.classList.add("tem");
       b.title = brl(totalDe(chave));
     }
-    b.addEventListener("click", () => { state.data = chave; fecharCalendario(); commit(); });
+    b.addEventListener("click", () => {
+      if(modoCopia){ copiarPara(chave); return; }
+      state.data = chave;
+      fecharCalendario();
+      commit();
+    });
     grid.appendChild(b);
   }
 
@@ -626,6 +774,7 @@ function renderCalendario(){
     if(d === state.data) b.className = "atual";
     b.innerHTML = `${fmtCurto.format(daISO(d))} <span>${brl(totalDe(d))}</span>`;
     b.addEventListener("click", () => {
+      if(modoCopia){ copiarPara(d); return; }
       state.data = d;
       mesVisivel = daISO(d);
       fecharCalendario();
@@ -643,6 +792,7 @@ function abrirCalendario(){
   $("btnDia").setAttribute("aria-expanded","true");
 }
 function fecharCalendario(){
+  modoCopia = false;
   $("cal").hidden = true;
   $("btnDia").setAttribute("aria-expanded","false");
 }
@@ -958,29 +1108,76 @@ $("clearAll").addEventListener("click", () => {
 });
 
 $("copiar").addEventListener("click", () => {
-  const itens = lista().items;
-  if(!itens.length){ alert("Este dia está vazio."); return; }
-  const resp = prompt("Copiar esta lista para qual data? (dia/mês/ano)",
-                      fmtCurto.format(daISO(state.data)).replace(/\s/g,""));
-  if(!resp) return;
-  const m = resp.match(/(\d{1,2})\D+(\d{1,2})\D+(\d{2,4})/);
-  if(!m){ alert("Não entendi a data. Use algo como 11/09/2026."); return; }
-  let [_, d, mes, ano] = m;
-  ano = ano.length === 2 ? "20"+ano : ano;
-  const alvo = `${ano}-${String(+mes).padStart(2,"0")}-${String(+d).padStart(2,"0")}`;
-  if(isNaN(daISO(alvo).getTime())){ alert("Data inválida."); return; }
+  if(!lista().items.length){ alert("Este dia está vazio — não há o que copiar."); return; }
+  modoCopia = true;
+  abrirCalendario();
+  $("cal").scrollIntoView({ block:"nearest", behavior:"smooth" });
+});
 
+$("cancelaCopia").addEventListener("click", () => {
+  modoCopia = false;
+  renderCalendario();
+});
+
+function copiarPara(alvo){
+  const origem = lista();
   const destino = state.listas[alvo] || { budget:0, items:[] };
-  itens.forEach(i => destino.items.push({ ...i, id:novoId(), done:false }));
-  destino.budget = destino.budget || lista().budget;
+  origem.items.forEach(i => destino.items.push({ ...i, id:novoId(), done:false }));
+  if(!destino.budget) destino.budget = origem.budget;
   state.listas[alvo] = destino;
+  modoCopia = false;
   state.data = alvo;
   mesVisivel = daISO(alvo);
+  fecharCalendario();
   commit();
+}
+
+/* ---------- botões do status ---------- */
+$("statusTxt").addEventListener("click", () => {
+  const aberto = !$("log").hidden;
+  $("log").hidden = aberto;
+  $("statusTxt").setAttribute("aria-expanded", String(!aberto));
+  renderStatus();
 });
+
+$("btnSalvar").addEventListener("click", async () => {
+  await save();
+  const ultimo = LOG[0];
+  if(ultimo && ultimo.tipo === "erro") $("log").hidden = false;
+  renderStatus();
+});
+
+$("copiarLog").addEventListener("click", async () => {
+  const texto = LOG.map(l => hora(l.quando) + "  [" + l.tipo + "] " + l.msg + (l.vezes>1 ? " ("+l.vezes+"x)" : "")).join("\n");
+  try{
+    await navigator.clipboard.writeText(texto);
+    logar("ok", "Registro copiado");
+  }catch(e){
+    logar("aviso", "Não consegui copiar; selecione o texto na tela");
+  }
+});
+
+/* ---------- conexão ---------- */
+function estadoConexao(inicial){
+  if(navigator.onLine){
+    if(!inicial) logar("ok", "Conexão restabelecida");
+  }else{
+    logar("aviso", "Sem conexão — a lista continua sendo salva no aparelho");
+  }
+}
+window.addEventListener("online", () => estadoConexao(false));
+window.addEventListener("offline", () => estadoConexao(false));
+
+/* Grava assim que o app sai da frente: fechar pelo multitarefa não pode
+   levar embora o que acabou de ser marcado. */
+document.addEventListener("visibilitychange", () => {
+  if(document.visibilityState === "hidden") save();
+});
+window.addEventListener("pagehide", () => save());
 
 (async function init(){
   await load();
+  estadoConexao(true);
   aplicarTema();
   popularCategorias();
   mesVisivel = daISO(state.data);

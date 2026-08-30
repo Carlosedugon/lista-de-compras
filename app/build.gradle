@@ -10,13 +10,11 @@ android {
         applicationId "br.com.listadecompras"
         minSdk 26
         targetSdk 34
-        versionCode 2
-        versionName "1.1"
+        versionCode 3
+        versionName "1.2"
     }
 
     signingConfigs {
-        // Chave fixa do projeto: garante que todo APK gerado tenha a mesma
-        // assinatura, para as atualizações instalarem por cima sem apagar nada.
         debug {
             storeFile file('lista-keystore.jks')
             storePassword 'listadecompras'
